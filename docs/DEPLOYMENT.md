@@ -20,6 +20,8 @@ pm2 start ecosystem.config.cjs
 pm2 save
 ```
 
+Для полностью автоматического первого запуска под `root` можно выполнить `bash scripts/bootstrap-server.sh`. Скрипт не печатает созданный пароль PostgreSQL и сохраняет `.env` с правами владельца.
+
 Секреты задаются в `.env` на сервере, файл не попадает в Git. Для реальных AI-решений нужен `OPENROUTER_API_KEY`; без него приложение честно показывает `deterministic-fallback` в `/api/health`.
 
 ## Nginx и TLS
