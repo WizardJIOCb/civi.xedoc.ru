@@ -27,6 +27,7 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgres://civi:${POSTGRES_PASSWORD:-change-me}@postgres:5432/civi
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODELS: ${OPENROUTER_MODELS:-openrouter/free}
       PUBLIC_ORIGIN: https://civi.xedoc.ru
       SIMULATION_SEED: ${SIMULATION_SEED:-xeodoc-chronicle-01}
       SIMULATION_AUTOSTART: "true"

@@ -44,7 +44,7 @@ export class OpenRouterDecisionProvider implements DecisionProvider {
         signal: AbortSignal.timeout(25_000),
       });
       if (!response.ok) throw new Error(`OpenRouter returned ${response.status}`);
-      const body = await response.json() as { choices?: Array<{ message?: { content?: string } }>; usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number } };
+      const body = await response.json() as { model?: string; choices?: Array<{ message?: { content?: string } }>; usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number } };
       const content = body.choices?.[0]?.message?.content;
       if (!content) throw new Error('OpenRouter returned no decision');
       const parsed = decisionSchema.parse(JSON.parse(content));
@@ -61,7 +61,7 @@ export class OpenRouterDecisionProvider implements DecisionProvider {
         })),
       };
       return {
-        id: `decision-${world.tick}-${civilization.id}`, tick: world.tick, civilizationId: civilization.id, model: civilization.model,
+        id: `decision-${world.tick}-${civilization.id}`, tick: world.tick, civilizationId: civilization.id, model: body.model ?? civilization.model,
         ...payload, latencyMs: Math.round(performance.now() - started), inputTokens: body.usage?.prompt_tokens ?? 0,
         outputTokens: body.usage?.completion_tokens ?? 0, costUsd: body.usage?.cost ?? 0, source: 'openrouter',
       };

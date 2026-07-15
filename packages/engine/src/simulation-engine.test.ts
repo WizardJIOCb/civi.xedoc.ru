@@ -33,4 +33,14 @@ describe('SimulationEngine', () => {
     expect(engine.snapshot().events).toHaveLength(1);
     expect(engine.snapshot().year).toBe(814);
   });
+
+  it('assigns a configurable model roster and preserves it after restart', () => {
+    const roster = ['openrouter/free', 'openai/gpt-oss-20b:free'];
+    const engine = new SimulationEngine('models', undefined, roster);
+    expect(engine.snapshot().civilizations.map((civilization) => civilization.model)).toEqual([
+      roster[0], roster[1], roster[0], roster[1], roster[0], roster[1],
+    ]);
+    engine.restart();
+    expect(engine.snapshot().civilizations[1]?.model).toBe(roster[1]);
+  });
 });

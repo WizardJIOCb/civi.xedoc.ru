@@ -12,7 +12,7 @@
     "build": "npm run build -w @civi/shared && npm run build -w @civi/engine && npm run build -w @civi/server && npm run build -w @civi/web",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build -w @civi/shared && npm run build -w @civi/engine && npm run typecheck -w @civi/server && npm run typecheck -w @civi/web",
     "lint": "eslint . --max-warnings=0",
     "start": "npm run start -w @civi/server"
   },

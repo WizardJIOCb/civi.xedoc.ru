@@ -2,9 +2,11 @@ import type { ClientMessage, ServerMessage, WorldSnapshot } from '@civi/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Connection = 'connecting' | 'live' | 'offline';
+interface HealthStatus { ai: 'openrouter' | 'deterministic-fallback'; database: string; models: string[]; status: string }
 
 export function useSimulation() {
   const [world, setWorld] = useState<WorldSnapshot>();
+  const [health, setHealth] = useState<HealthStatus>();
   const [connection, setConnection] = useState<Connection>('connecting');
   const socketRef = useRef<WebSocket | undefined>(undefined);
 
@@ -17,6 +19,12 @@ export function useSimulation() {
         if (!response.ok) throw new Error('world unavailable');
         if (!disposed) setWorld(await response.json() as WorldSnapshot);
       } catch { if (!disposed) setConnection('offline'); }
+    };
+    const loadHealth = async () => {
+      try {
+        const response = await fetch('/api/health');
+        if (response.ok && !disposed) setHealth(await response.json() as HealthStatus);
+      } catch { /* World connection state already communicates availability. */ }
     };
     const connect = () => {
       if (disposed) return;
@@ -35,6 +43,7 @@ export function useSimulation() {
       };
     };
     void load();
+    void loadHealth();
     connect();
     return () => { disposed = true; if (reconnect) clearTimeout(reconnect); socketRef.current?.close(); };
   }, []);
@@ -45,5 +54,5 @@ export function useSimulation() {
     else void fetch('/api/simulation/control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
   }, []);
 
-  return { world, connection, control };
+  return { world, health, connection, control };
 }

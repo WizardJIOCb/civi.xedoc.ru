@@ -26,6 +26,7 @@ if [[ ! -f "$APP_DIR/.env" ]]; then
   {
     printf 'POSTGRES_PASSWORD=%s\n' "$database_password"
     printf 'OPENROUTER_API_KEY=%s\n' "${OPENROUTER_API_KEY:-}"
+    printf 'OPENROUTER_MODELS=%s\n' "${OPENROUTER_MODELS:-openrouter/free}"
     printf 'SIMULATION_SEED=%s\n' "${SIMULATION_SEED:-xeodoc-chronicle-01}"
     printf 'SIMULATION_TICK_MS=%s\n' "${SIMULATION_TICK_MS:-3500}"
   } > "$APP_DIR/.env"

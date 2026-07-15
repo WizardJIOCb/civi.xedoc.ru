@@ -37,6 +37,23 @@ npm run build
 
 См. `.env.example`. Никогда не коммитьте OpenRouter API key или пароль PostgreSQL.
 
+### Бесплатные модели OpenRouter
+
+Создайте API key в [OpenRouter Keys](https://openrouter.ai/settings/keys) и добавьте его только в серверный `.env`:
+
+```dotenv
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODELS=openrouter/free
+```
+
+`openrouter/free` автоматически выбирает доступную бесплатную модель с поддержкой нужного формата ответа. Для фиксированных противников перечислите модели через запятую — они распределятся по державам по кругу:
+
+```dotenv
+OPENROUTER_MODELS=tencent/hy3:free,google/gemma-4-26b-a4b-it:free,nvidia/nemotron-3-super-120b-a12b:free,qwen/qwen3-next-80b-a3b-instruct:free,nvidia/nemotron-nano-9b-v2:free,openai/gpt-oss-20b:free
+```
+
+После изменения выполните `docker compose up -d --force-recreate app`. Текущий режим виден в `/api/health` и в карточке стоимости интерфейса. Бесплатные модели и лимиты OpenRouter меняются, поэтому `openrouter/free` — рекомендуемая конфигурация.
+
 ## Визуальный арт
 
 Фоновая иллюстрация `apps/web/public/assets/world-atmosphere.png` создана встроенным image generation workflow специально для проекта. Интерактивный мир, здания, леса, горы, границы и события отрисовываются кодом PixiJS из актуального snapshot.

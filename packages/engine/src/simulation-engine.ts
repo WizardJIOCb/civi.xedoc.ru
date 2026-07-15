@@ -20,9 +20,12 @@ function statusFrom(happiness: number, food: number, population: number): Civili
 
 export class SimulationEngine {
   private world: WorldSnapshot;
+  private readonly modelRoster: string[];
 
-  constructor(seed: string, initial?: WorldSnapshot) {
+  constructor(seed: string, initial?: WorldSnapshot, modelRoster: string[] = []) {
     this.world = initial ? structuredClone(initial) : generateWorld(seed);
+    this.modelRoster = [...modelRoster];
+    this.applyModelRoster();
     this.world.checksum = checksum(this.world);
   }
 
@@ -35,6 +38,7 @@ export class SimulationEngine {
 
   restart(seed = this.world.seed): WorldSnapshot {
     this.world = generateWorld(seed);
+    this.applyModelRoster();
     this.world.checksum = checksum(this.world);
     return this.snapshot();
   }
@@ -88,5 +92,12 @@ export class SimulationEngine {
     this.world.stats.activeWars = this.world.relations.filter((relation) => relation.state === 'war').length / 2;
     this.world.stats.totalGdp = living.reduce((sum, civilization) => sum + civilization.metrics.treasury * 3 + civilization.metrics.population * 0.014, 0);
     this.world.stats.tokenCostUsd = this.world.decisions.reduce((sum, decision) => sum + decision.costUsd, 0);
+  }
+
+  private applyModelRoster(): void {
+    if (this.modelRoster.length === 0) return;
+    this.world.civilizations.forEach((civilization, index) => {
+      civilization.model = this.modelRoster[index % this.modelRoster.length] ?? this.modelRoster[0]!;
+    });
   }
 }

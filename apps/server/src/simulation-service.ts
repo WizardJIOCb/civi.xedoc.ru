@@ -12,10 +12,11 @@ export class SimulationService {
 
   constructor(
     seed: string,
+    modelRoster: string[],
     private readonly provider: DecisionProvider,
     private readonly persistence: Persistence,
     private readonly baseTickMs: number,
-  ) { this.engine = new SimulationEngine(seed); }
+  ) { this.engine = new SimulationEngine(seed, undefined, modelRoster); }
 
   snapshot(): WorldSnapshot { return this.engine.snapshot(); }
   catalogMeta(): { total: number; scopes: Record<string, number> } {

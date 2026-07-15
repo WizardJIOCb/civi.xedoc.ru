@@ -19,9 +19,9 @@ const persistence = new Persistence();
 const databaseConnected = await persistence.connect(config.databaseUrl);
 const fallback = new FallbackDecisionProvider();
 const provider = config.openRouterApiKey ? new OpenRouterDecisionProvider(config.openRouterApiKey, fallback) : fallback;
-const simulation = new SimulationService(config.seed, provider, persistence, config.tickMs);
+const simulation = new SimulationService(config.seed, config.openRouterModels, provider, persistence, config.tickMs);
 
-app.get('/api/health', async () => ({ status: 'ok', database: databaseConnected ? 'connected' : 'memory', ai: config.openRouterApiKey ? 'openrouter' : 'deterministic-fallback', tick: simulation.snapshot().tick }));
+app.get('/api/health', async () => ({ status: 'ok', database: databaseConnected ? 'connected' : 'memory', ai: config.openRouterApiKey ? 'openrouter' : 'deterministic-fallback', models: config.openRouterModels, tick: simulation.snapshot().tick }));
 app.get('/api/world', async () => simulation.snapshot());
 app.get('/api/events/catalog-meta', async () => simulation.catalogMeta());
 app.get('/api/replays/:worldId', async (request) => persistence.replay((request.params as { worldId: string }).worldId));

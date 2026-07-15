@@ -9,7 +9,7 @@ import { useSimulation } from './hooks/use-simulation';
 import { compactNumber, money, seasonName } from './lib/format';
 
 export function App() {
-  const { world, connection, control } = useSimulation();
+  const { world, health, connection, control } = useSimulation();
   const [selectedId, setSelectedId] = useState<string>();
   const [intro, setIntro] = useState(true);
   useEffect(() => { const timeout = setTimeout(() => setIntro(false), 1450); return () => clearTimeout(timeout); }, []);
@@ -44,7 +44,7 @@ export function App() {
     </section>
 
     <main className="observer-grid">
-      <div className="left-rail"><CivilizationList civilizations={world.civilizations} selectedId={selectedId} onSelect={selectCivilization} /><div className="cost-card"><Zap size={15} /><span><small>OpenRouter · эта эпоха</small><strong>${world.stats.tokenCostUsd.toFixed(4)}</strong></span><Activity size={16} /></div></div>
+      <div className="left-rail"><CivilizationList civilizations={world.civilizations} selectedId={selectedId} onSelect={selectCivilization} /><div className="cost-card" title={health?.models.join(', ')}><Zap size={15} /><span><small>{health?.ai === 'openrouter' ? 'OpenRouter · AI активен' : 'Fallback · добавьте API key'}</small><strong>${world.stats.tokenCostUsd.toFixed(4)}</strong></span><Activity size={16} /></div></div>
       <section className="map-stage">
         <WorldMap world={world} selectedId={selectedId} onSelectCivilization={selectCivilization} />
         <div className="map-vignette" />
