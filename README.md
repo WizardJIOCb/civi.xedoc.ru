@@ -56,4 +56,6 @@ OPENROUTER_MODELS=tencent/hy3:free,google/gemma-4-26b-a4b-it:free,nvidia/nemotro
 
 ## Визуальный арт
 
-Фоновая иллюстрация `apps/web/public/assets/world-atmosphere.png` создана встроенным image generation workflow специально для проекта. Интерактивный мир, здания, леса, горы, границы и события отрисовываются кодом PixiJS из актуального snapshot.
+Фоновая иллюстрация `apps/web/public/assets/world-atmosphere.png` создана встроенным image generation workflow специально для проекта. Интерактивный мир, рельеф, границы, события и анимированные жители отрисовываются PixiJS из актуального snapshot.
+
+Для городов и растительности используются выбранные спрайты из [Kenney Sketch Town](https://kenney.nl/assets/sketch-town), лицензия Creative Commons CC0. Копия лицензии находится в `apps/web/public/assets/kenney-sketch-town/LICENSE.txt`.
