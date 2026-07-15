@@ -130,14 +130,20 @@ export function WorldMap({ world, selectedId, onSelectCivilization }: Props) {
     const app = new Application();
     let disposed = false;
     let initialized = false;
+    let destroyed = false;
+    const destroyApp = () => {
+      if (!initialized || destroyed) return;
+      destroyed = true;
+      app.destroy(true, { children: true });
+    };
 
     const build = async () => {
       await app.init({ resizeTo: host, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: Math.min(devicePixelRatio, 2) });
       initialized = true;
-      if (disposed) { app.destroy(true, { children: true }); return; }
+      if (disposed) { destroyApp(); return; }
       host.appendChild(app.canvas);
       const textures = await loadMapTextures();
-      if (disposed) { app.destroy(true, { children: true }); return; }
+      if (disposed) { destroyApp(); return; }
 
       const worldLayer = new Container({ sortableChildren: true });
       worldLayer.scale.set(Math.max(0.72, Math.min(1.08, host.clientWidth / 990)));
@@ -245,7 +251,7 @@ export function WorldMap({ world, selectedId, onSelectCivilization }: Props) {
     void build();
     return () => {
       disposed = true;
-      if (initialized) app.destroy(true, { children: true });
+      destroyApp();
     };
   }, [world.checksum, selectedId, onSelectCivilization]);
 
