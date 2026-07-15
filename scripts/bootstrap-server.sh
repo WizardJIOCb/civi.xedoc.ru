@@ -49,7 +49,7 @@ cp "$APP_DIR/infra/nginx/civi.xedoc.ru.conf" "$NGINX_SITE"
 nginx -t
 systemctl reload nginx
 
-curl --fail --retry 12 --retry-delay 2 http://127.0.0.1:4100/api/health
+curl --fail --retry 12 --retry-all-errors --retry-delay 2 http://127.0.0.1:4100/api/health
 curl --fail --retry 10 --retry-all-errors --retry-delay 2 --noproxy '*' --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/api/health"
 echo
 echo "Chronicle is live at https://$DOMAIN"
