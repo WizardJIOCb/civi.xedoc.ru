@@ -49,6 +49,6 @@ nginx -t
 systemctl reload nginx
 
 curl --fail --retry 12 --retry-delay 2 http://127.0.0.1:4100/api/health
-curl --fail --retry 6 --retry-delay 2 "https://$DOMAIN/api/health"
+curl --fail --retry 6 --retry-delay 2 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN/api/health"
 echo
 echo "Chronicle is live at https://$DOMAIN"
