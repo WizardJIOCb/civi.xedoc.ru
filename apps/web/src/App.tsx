@@ -11,17 +11,35 @@ import { useSimulation } from './hooks/use-simulation';
 import { compactNumber, money, seasonName } from './lib/format';
 
 export function App() {
-  const { world, health, connection, control } = useSimulation();
+  const { world, health, connection, control, chooseEvent } = useSimulation();
   const [selectedId, setSelectedId] = useState<string>();
   const [activeView, setActiveView] = useState<'world' | 'chronicle' | 'diplomacy'>('world');
   const [intro, setIntro] = useState(true);
+  const [resolvingChoice, setResolvingChoice] = useState(false);
+  const [choiceNotice, setChoiceNotice] = useState<{ kind: 'success' | 'error'; message: string }>();
   useEffect(() => { const timeout = setTimeout(() => setIntro(false), 1450); return () => clearTimeout(timeout); }, []);
+  useEffect(() => {
+    if (!choiceNotice) return;
+    const timeout = setTimeout(() => setChoiceNotice(undefined), 4500);
+    return () => clearTimeout(timeout);
+  }, [choiceNotice]);
   const selectCivilization = useCallback((id: string) => setSelectedId(id), []);
+  const resolveEvent = useCallback(async (eventId: string, choiceId: string, label: string) => {
+    setResolvingChoice(true);
+    try {
+      await chooseEvent(eventId, choiceId);
+      setChoiceNotice({ kind: 'success', message: `Решение «${label}» принято. Последствия записаны в Летопись.` });
+    } catch (error) {
+      setChoiceNotice({ kind: 'error', message: error instanceof Error ? error.message : 'Не удалось применить решение.' });
+    } finally {
+      setResolvingChoice(false);
+    }
+  }, [chooseEvent]);
 
   if (!world) return <div className="loading-screen"><div className="loading-sigil"><Globe2 /></div><span>CHRONICLE</span><p>{connection === 'offline' ? 'Сервер летописей недоступен' : 'Пробуждаем мир…'}</p></div>;
   const selected = world.civilizations.find((civilization) => civilization.id === selectedId);
   const latestEvent = world.events.find((event) => !event.resolved);
-  const latestDecision = world.decisions[0];
+  const latestDecision = world.decisions.find((decision) => decision.source !== 'observer');
   const aiLabel = health?.ai === 'openrouter'
     ? latestDecision ? latestDecision.source === 'openrouter' ? 'OpenRouter · AI активен' : 'OpenRouter · защищённый fallback' : 'OpenRouter · проверяем доступ'
     : 'Fallback · добавьте API key';
@@ -63,7 +81,8 @@ export function App() {
           <div className="map-caption"><span>Архипелаг Астэр</span><small>seed / {world.seed}</small></div>
           <div className="turn-indicator"><Clock3 size={15} /><span>ХОД {world.tick.toString().padStart(3, '0')}</span><i>{world.checksum}</i></div>
           <div className="map-legend"><span><i className="terrain forest" />Леса</span><span><i className="terrain plains" />Равнины</span><span><i className="terrain mountain" />Высоты</span><span><i className="event-pulse" />Мировое событие</span></div>
-          {latestEvent && <div className={`event-toast tone-${latestEvent.tone}`}><span className="event-kicker">МИРОВОЕ СОБЫТИЕ · УРОВЕНЬ {latestEvent.severity}</span><strong>{latestEvent.title}</strong><p>{latestEvent.description}</p><div>{latestEvent.choices.slice(0, 3).map((choice) => <span key={choice.id}>{choice.label}</span>)}</div></div>}
+          {choiceNotice && <div className={`event-choice-notice ${choiceNotice.kind}`} role="status" aria-live="polite">{choiceNotice.message}</div>}
+          {latestEvent && <div className={`event-toast tone-${latestEvent.tone}`}><span className="event-kicker">МИРОВОЕ СОБЫТИЕ · УРОВЕНЬ {latestEvent.severity}</span><strong>{latestEvent.title}</strong><p>{latestEvent.description}</p><span className="event-prompt">Выберите ответ наблюдателя — решение изменит ход истории</span><div className="event-actions">{latestEvent.choices.map((choice) => <button className="event-choice" type="button" key={choice.id} data-risk={choice.risk} disabled={resolvingChoice} title={`Риск: ${choice.risk === 'low' ? 'низкий' : choice.risk === 'medium' ? 'средний' : 'высокий'}`} onClick={() => void resolveEvent(latestEvent.id, choice.id, choice.label)}>{resolvingChoice ? 'Применяем…' : choice.label}</button>)}</div></div>}
         </section>
         <div className="right-rail"><DecisionFeed decisions={world.decisions} civilizations={world.civilizations} tick={world.tick} /></div>
       </main>

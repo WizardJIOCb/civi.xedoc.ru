@@ -24,6 +24,14 @@ const simulation = new SimulationService(config.seed, config.openRouterModels, p
 app.get('/api/health', async () => ({ status: 'ok', database: databaseConnected ? 'connected' : 'memory', ai: config.openRouterApiKey ? 'openrouter' : 'deterministic-fallback', models: config.openRouterModels, tick: simulation.snapshot().tick }));
 app.get('/api/world', async () => simulation.snapshot());
 app.get('/api/events/catalog-meta', async () => simulation.catalogMeta());
+app.post('/api/events/:eventId/choice', async (request, reply) => {
+  const { eventId } = request.params as { eventId: string };
+  const { choiceId } = (request.body ?? {}) as { choiceId?: string };
+  if (!choiceId) return reply.code(400).send({ message: 'Не указан вариант решения.' });
+  const world = await simulation.resolveEventChoice(eventId, choiceId);
+  if (!world) return reply.code(409).send({ message: 'Событие уже завершено или вариант решения недоступен.' });
+  return world;
+});
 app.get('/api/replays/:worldId', async (request) => persistence.replay((request.params as { worldId: string }).worldId));
 app.post('/api/simulation/control', async (request) => simulation.control(request.body as Parameters<typeof simulation.control>[0]));
 app.get('/ws', { websocket: true }, (socket) => simulation.addClient(socket));

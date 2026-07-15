@@ -54,5 +54,20 @@ export function useSimulation() {
     else void fetch('/api/simulation/control', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
   }, []);
 
-  return { world, health, connection, control };
+  const chooseEvent = useCallback(async (eventId: string, choiceId: string) => {
+    const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/choice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ choiceId }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => undefined) as { message?: string } | undefined;
+      throw new Error(detail?.message ?? 'Не удалось применить решение.');
+    }
+    const snapshot = await response.json() as WorldSnapshot;
+    setWorld(snapshot);
+    return snapshot;
+  }, []);
+
+  return { world, health, connection, control, chooseEvent };
 }

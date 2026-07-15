@@ -9,7 +9,7 @@ export function validateAction(action: CivilizationAction, world: WorldSnapshot)
   if (!allowedActions.has(action.type) || !Number.isFinite(action.investment) || action.investment < 0 || action.investment > 100) return false;
   if (action.targetCivilizationId && !world.civilizations.some((civ) => civ.id === action.targetCivilizationId)) return false;
   if (action.targetTileId && !world.tiles.some((tile) => tile.id === action.targetTileId)) return false;
-  if (action.eventId && !world.events.some((event) => event.id === action.eventId)) return false;
+  if (action.eventId && !world.events.some((event) => event.id === action.eventId && !event.resolved)) return false;
   return true;
 }
 

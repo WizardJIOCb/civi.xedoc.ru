@@ -64,6 +64,14 @@ export class SimulationService {
     } finally { this.busy = false; }
   }
 
+  async resolveEventChoice(eventId: string, choiceId: string): Promise<WorldSnapshot | undefined> {
+    const result = this.engine.resolveEventChoice(eventId, choiceId);
+    if (!result) return undefined;
+    this.broadcast({ type: 'snapshot', payload: result.world });
+    await Promise.all([this.persistence.saveDecisions([result.decision]), this.persistence.saveSnapshot(result.world)]);
+    return result.world;
+  }
+
   control(message: ClientMessage): WorldSnapshot {
     if (message.type !== 'control') return this.snapshot();
     switch (message.payload.command) {

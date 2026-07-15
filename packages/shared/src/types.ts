@@ -71,7 +71,7 @@ export interface MemoryEntry {
 export interface EventChoice {
   id: string;
   label: string;
-  intent: string;
+  intent: ActionKind;
   risk: 'low' | 'medium' | 'high';
 }
 
@@ -117,7 +117,7 @@ export interface AIDecision {
   inputTokens: number;
   outputTokens: number;
   costUsd: number;
-  source: 'openrouter' | 'deterministic-fallback';
+  source: 'openrouter' | 'deterministic-fallback' | 'observer';
 }
 
 export interface ChronicleEntry {

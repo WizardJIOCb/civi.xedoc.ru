@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { AIDecision, CivilizationStatus, Season, WorldSnapshot } from '@civi/shared';
+import type { AIDecision, ActionKind, CivilizationStatus, Season, WorldSnapshot } from '@civi/shared';
 import { resolveDecision } from './action-resolver.js';
 import { instantiateEvent } from './event-catalog.js';
 import { SeededRandom } from './random.js';
@@ -58,6 +58,60 @@ export class SimulationEngine {
     this.recalculateStats();
     this.world.checksum = checksum(this.world);
     return this.snapshot();
+  }
+
+  resolveEventChoice(eventId: string, choiceId: string): { decision: AIDecision; world: WorldSnapshot } | undefined {
+    const event = this.world.events.find((candidate) => candidate.id === eventId && !candidate.resolved);
+    const choice = event?.choices.find((candidate) => candidate.id === choiceId);
+    if (!event || !choice) return undefined;
+
+    const civilization = event.civilizationIds
+      .map((id) => this.world.civilizations.find((candidate) => candidate.id === id))
+      .find((candidate) => candidate?.status !== 'fallen') ?? this.world.civilizations.find((candidate) => candidate.status !== 'fallen');
+    if (!civilization) return undefined;
+
+    const relational = new Set<ActionKind>(['attack', 'trade', 'help_neighbor', 'negotiate', 'sanction', 'sabotage', 'spy']);
+    const targetCivilizationId = relational.has(choice.intent)
+      ? event.civilizationIds.find((id) => id !== civilization.id)
+      : undefined;
+    const investment = choice.intent === 'ignore' ? 0 : choice.risk === 'high' ? 32 : choice.risk === 'medium' ? 24 : 16;
+    const decision: AIDecision = {
+      id: `observer-${event.id}-${choice.id}`,
+      tick: this.world.tick,
+      civilizationId: civilization.id,
+      model: 'observer',
+      summary: `Наблюдатель выбирает «${choice.label}» в ответ на событие «${event.title}».`,
+      reasoningSummary: `Ручное решение наблюдателя; риск: ${choice.risk}.`,
+      actions: [{
+        type: choice.intent,
+        ...(targetCivilizationId ? { targetCivilizationId } : {}),
+        eventId: event.id,
+        investment,
+        message: `Держава исполняет решение «${choice.label}» в ответ на событие «${event.title}».`,
+      }],
+      latencyMs: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      costUsd: 0,
+      source: 'observer',
+    };
+
+    resolveDecision(this.world, decision);
+    this.world.decisions = [decision, ...this.world.decisions].slice(0, 36);
+    this.world.chronicle.unshift({
+      id: `chronicle-${decision.id}`,
+      tick: this.world.tick,
+      year: this.world.year,
+      category: choice.intent === 'attack' ? 'war' : choice.intent === 'research' ? 'science' : choice.intent === 'trade' ? 'economy' : 'diplomacy',
+      title: `Решение наблюдателя: ${choice.label}`,
+      body: `В ответ на событие «${event.title}» принято решение «${choice.label}». Последствия затронули державу ${civilization.name}.`,
+      civilizationIds: event.civilizationIds,
+      importance: event.severity,
+    });
+    this.world.chronicle = this.world.chronicle.slice(0, 80);
+    this.recalculateStats();
+    this.world.checksum = checksum(this.world);
+    return { decision, world: this.snapshot() };
   }
 
   private evolveEconomy(): void {

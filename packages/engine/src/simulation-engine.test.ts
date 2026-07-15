@@ -43,4 +43,19 @@ describe('SimulationEngine', () => {
     engine.restart();
     expect(engine.snapshot().civilizations[1]?.model).toBe(roster[1]);
   });
+
+  it('applies an observer choice and resolves the selected event', () => {
+    const engine = new SimulationEngine('observer-choice');
+    for (let index = 0; index < 3; index += 1) engine.advance();
+    const event = engine.snapshot().events[0];
+    const choice = event?.choices[0];
+    expect(event).toBeDefined();
+    expect(choice).toBeDefined();
+
+    const result = engine.resolveEventChoice(event!.id, choice!.id);
+    expect(result?.decision.source).toBe('observer');
+    expect(result?.world.events.find((candidate) => candidate.id === event!.id)?.resolved).toBe(true);
+    expect(result?.world.chronicle[0]?.title).toContain(choice!.label);
+    expect(engine.resolveEventChoice(event!.id, choice!.id)).toBeUndefined();
+  });
 });
