@@ -43,7 +43,15 @@ export class OpenRouterDecisionProvider implements DecisionProvider {
         }),
         signal: AbortSignal.timeout(25_000),
       });
-      if (!response.ok) throw new Error(`OpenRouter returned ${response.status}`);
+      if (!response.ok) {
+        const responseText = await response.text();
+        let detail = responseText.slice(0, 180);
+        try {
+          const failure = JSON.parse(responseText) as { error?: string | { message?: string } };
+          detail = typeof failure.error === 'string' ? failure.error : failure.error?.message ?? detail;
+        } catch { /* Preserve the bounded plain-text response. */ }
+        throw new Error(`OpenRouter ${response.status}: ${detail || response.statusText}`);
+      }
       const body = await response.json() as { model?: string; choices?: Array<{ message?: { content?: string } }>; usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number } };
       const content = body.choices?.[0]?.message?.content;
       if (!content) throw new Error('OpenRouter returned no decision');

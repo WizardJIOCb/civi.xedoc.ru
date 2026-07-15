@@ -21,6 +21,10 @@ export function App() {
   if (!world) return <div className="loading-screen"><div className="loading-sigil"><Globe2 /></div><span>CHRONICLE</span><p>{connection === 'offline' ? 'Сервер летописей недоступен' : 'Пробуждаем мир…'}</p></div>;
   const selected = world.civilizations.find((civilization) => civilization.id === selectedId);
   const latestEvent = world.events.find((event) => !event.resolved);
+  const latestDecision = world.decisions[0];
+  const aiLabel = health?.ai === 'openrouter'
+    ? latestDecision ? latestDecision.source === 'openrouter' ? 'OpenRouter · AI активен' : 'OpenRouter · защищённый fallback' : 'OpenRouter · проверяем доступ'
+    : 'Fallback · добавьте API key';
 
   return <div className={`app-shell ${intro ? 'is-entering' : ''}`}>
     <header className="topbar">
@@ -52,7 +56,7 @@ export function App() {
 
     {activeView === 'world' && <>
       <main className="observer-grid">
-        <div className="left-rail"><CivilizationList civilizations={world.civilizations} selectedId={selectedId} onSelect={selectCivilization} /><div className="cost-card" title={health?.models.join(', ')}><Zap size={17} /><span><small>{health?.ai === 'openrouter' ? 'OpenRouter · AI активен' : 'Fallback · добавьте API key'}</small><strong>${world.stats.tokenCostUsd.toFixed(4)}</strong></span><Activity size={18} /></div></div>
+        <div className="left-rail"><CivilizationList civilizations={world.civilizations} selectedId={selectedId} onSelect={selectCivilization} /><div className="cost-card" title={[health?.models.join(', '), latestDecision?.reasoningSummary].filter(Boolean).join(' · ')}><Zap size={17} /><span><small>{aiLabel}</small><strong>${world.stats.tokenCostUsd.toFixed(4)}</strong></span><Activity size={18} /></div></div>
         <section className="map-stage">
           <WorldMap world={world} selectedId={selectedId} onSelectCivilization={selectCivilization} />
           <div className="map-vignette" />
