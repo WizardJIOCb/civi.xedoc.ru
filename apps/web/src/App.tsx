@@ -3,7 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { CivilizationDetail } from './components/CivilizationDetail';
 import { CivilizationList } from './components/CivilizationList';
 import { DecisionFeed } from './components/DecisionFeed';
+import { DiplomacyView } from './components/DiplomacyView';
 import { EventTimeline } from './components/EventTimeline';
+import { ChronicleView } from './components/ChronicleView';
 import { WorldMap } from './components/WorldMap';
 import { useSimulation } from './hooks/use-simulation';
 import { compactNumber, money, seasonName } from './lib/format';
@@ -11,6 +13,7 @@ import { compactNumber, money, seasonName } from './lib/format';
 export function App() {
   const { world, health, connection, control } = useSimulation();
   const [selectedId, setSelectedId] = useState<string>();
+  const [activeView, setActiveView] = useState<'world' | 'chronicle' | 'diplomacy'>('world');
   const [intro, setIntro] = useState(true);
   useEffect(() => { const timeout = setTimeout(() => setIntro(false), 1450); return () => clearTimeout(timeout); }, []);
   const selectCivilization = useCallback((id: string) => setSelectedId(id), []);
@@ -21,8 +24,12 @@ export function App() {
 
   return <div className={`app-shell ${intro ? 'is-entering' : ''}`}>
     <header className="topbar">
-      <a className="brand" href="#"><span className="brand-mark"><Globe2 size={19} /></span><span><strong>CHRONICLE</strong><small>AI CIVILIZATIONS ARENA</small></span></a>
-      <nav className="primary-nav"><button className="active"><Globe2 size={15} /> Мир</button><button><BookOpen size={15} /> Летопись</button><button><Landmark size={15} /> Дипломатия</button></nav>
+      <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setActiveView('world'); }}><span className="brand-mark"><Globe2 size={19} /></span><span><strong>CHRONICLE</strong><small>AI CIVILIZATIONS ARENA</small></span></a>
+      <nav className="primary-nav" aria-label="Основные разделы">
+        <button className={activeView === 'world' ? 'active' : ''} onClick={() => setActiveView('world')} aria-current={activeView === 'world' ? 'page' : undefined}><Globe2 size={17} /> Мир</button>
+        <button className={activeView === 'chronicle' ? 'active' : ''} onClick={() => setActiveView('chronicle')} aria-current={activeView === 'chronicle' ? 'page' : undefined}><BookOpen size={17} /> Летопись</button>
+        <button className={activeView === 'diplomacy' ? 'active' : ''} onClick={() => setActiveView('diplomacy')} aria-current={activeView === 'diplomacy' ? 'page' : undefined}><Landmark size={17} /> Дипломатия</button>
+      </nav>
       <div className="era-selector"><span>Эпоха наблюдения</span><ChevronDown size={14} /></div>
       <div className={`connection ${connection}`}><i />{connection === 'live' ? 'Мир онлайн' : connection}</div>
     </header>
@@ -43,20 +50,23 @@ export function App() {
       </div>
     </section>
 
-    <main className="observer-grid">
-      <div className="left-rail"><CivilizationList civilizations={world.civilizations} selectedId={selectedId} onSelect={selectCivilization} /><div className="cost-card" title={health?.models.join(', ')}><Zap size={15} /><span><small>{health?.ai === 'openrouter' ? 'OpenRouter · AI активен' : 'Fallback · добавьте API key'}</small><strong>${world.stats.tokenCostUsd.toFixed(4)}</strong></span><Activity size={16} /></div></div>
-      <section className="map-stage">
-        <WorldMap world={world} selectedId={selectedId} onSelectCivilization={selectCivilization} />
-        <div className="map-vignette" />
-        <div className="map-caption"><span>Архипелаг Астэр</span><small>seed / {world.seed}</small></div>
-        <div className="turn-indicator"><Clock3 size={13} /><span>ХОД {world.tick.toString().padStart(3, '0')}</span><i>{world.checksum}</i></div>
-        <div className="map-legend"><span><i className="terrain forest" />Леса</span><span><i className="terrain plains" />Равнины</span><span><i className="terrain mountain" />Высоты</span><span><i className="event-pulse" />Событие</span></div>
-        {latestEvent && <div className={`event-toast tone-${latestEvent.tone}`}><span className="event-kicker">МИРОВОЕ СОБЫТИЕ · УРОВЕНЬ {latestEvent.severity}</span><strong>{latestEvent.title}</strong><p>{latestEvent.description}</p><div>{latestEvent.choices.slice(0, 3).map((choice) => <span key={choice.id}>{choice.label}</span>)}</div></div>}
-      </section>
-      <div className="right-rail"><DecisionFeed decisions={world.decisions} civilizations={world.civilizations} tick={world.tick} /></div>
-    </main>
-
-    <EventTimeline events={world.events} chronicle={world.chronicle} tick={world.tick} />
+    {activeView === 'world' && <>
+      <main className="observer-grid">
+        <div className="left-rail"><CivilizationList civilizations={world.civilizations} selectedId={selectedId} onSelect={selectCivilization} /><div className="cost-card" title={health?.models.join(', ')}><Zap size={17} /><span><small>{health?.ai === 'openrouter' ? 'OpenRouter · AI активен' : 'Fallback · добавьте API key'}</small><strong>${world.stats.tokenCostUsd.toFixed(4)}</strong></span><Activity size={18} /></div></div>
+        <section className="map-stage">
+          <WorldMap world={world} selectedId={selectedId} onSelectCivilization={selectCivilization} />
+          <div className="map-vignette" />
+          <div className="map-caption"><span>Архипелаг Астэр</span><small>seed / {world.seed}</small></div>
+          <div className="turn-indicator"><Clock3 size={15} /><span>ХОД {world.tick.toString().padStart(3, '0')}</span><i>{world.checksum}</i></div>
+          <div className="map-legend"><span><i className="terrain forest" />Леса</span><span><i className="terrain plains" />Равнины</span><span><i className="terrain mountain" />Высоты</span><span><i className="event-pulse" />Мировое событие</span></div>
+          {latestEvent && <div className={`event-toast tone-${latestEvent.tone}`}><span className="event-kicker">МИРОВОЕ СОБЫТИЕ · УРОВЕНЬ {latestEvent.severity}</span><strong>{latestEvent.title}</strong><p>{latestEvent.description}</p><div>{latestEvent.choices.slice(0, 3).map((choice) => <span key={choice.id}>{choice.label}</span>)}</div></div>}
+        </section>
+        <div className="right-rail"><DecisionFeed decisions={world.decisions} civilizations={world.civilizations} tick={world.tick} /></div>
+      </main>
+      <EventTimeline events={world.events} chronicle={world.chronicle} tick={world.tick} />
+    </>}
+    {activeView === 'chronicle' && <ChronicleView world={world} onSelectCivilization={selectCivilization} />}
+    {activeView === 'diplomacy' && <DiplomacyView world={world} onSelectCivilization={selectCivilization} />}
     <footer><span>Детерминированный мир · LLM только принимают решения</span><span>REPLAY <b>{world.checksum}</b></span></footer>
     {selected && <CivilizationDetail civilization={selected} relations={world.relations} civilizations={world.civilizations} onClose={() => setSelectedId(undefined)} />}
   </div>;
